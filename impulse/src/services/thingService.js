@@ -1,9 +1,19 @@
 import api from './api';
 
 
+
 export const createThing = async (thingData) => {
     try {
       const response = await api.post('/things/', thingData);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : new Error('Network Error');
+    }
+  };
+  
+  export const getThingById = async (id) => {
+    try {
+      const response = await api.get(`/things/${id}`);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : new Error('Network Error');
@@ -31,6 +41,15 @@ export const createThing = async (thingData) => {
   export const getAllThings = async () => {
     try {
       const response = await api.get('/things/');
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : new Error('Network Error');
+    }
+  };
+  
+  export const deleteThing = async (id) => {
+    try {
+      const response = await api.delete(`/things/${id}`);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : new Error('Network Error');
