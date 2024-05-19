@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, Path
 from pydantic import BaseModel
-from datetime import datetime
 from typing import Optional, Dict, Any
 from deps import get_db_handler
 import json
@@ -22,7 +21,6 @@ class UpdateRelationRequest(BaseModel):
 @router.post("/relations/")
 def create_relation(request: CreateRelationRequest, db_handler=Depends(get_db_handler)):
     properties = request.properties or {}
-    properties['timestamp'] = datetime.now().isoformat()
 
     if 'metadata' in properties:
         properties['metadata'] = json.dumps(properties['metadata'])  # Serialize metadata to JSON string
