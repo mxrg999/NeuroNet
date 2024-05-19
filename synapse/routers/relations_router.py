@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, Path
 from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional, Dict, Any
 from deps import get_db_handler
 import json
@@ -21,7 +22,8 @@ class UpdateRelationRequest(BaseModel):
 @router.post("/relations/")
 def create_relation(request: CreateRelationRequest, db_handler=Depends(get_db_handler)):
     properties = request.properties or {}
-    
+    properties['timestamp'] = datetime.now().isoformat()
+
     if 'metadata' in properties:
         properties['metadata'] = json.dumps(properties['metadata'])  # Serialize metadata to JSON string
     
@@ -115,6 +117,36 @@ def get_relations(
     try:
         result = db_handler.execute_query(query, parameters)
         relations = [{"relation_id": record['relation_id'], "properties": dict(record['r'])} for record in result]
+        return relations
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@router.get("/relations/all")
+def get_all_relations(db_handler=Depends(get_db_handler)):
+    query = """
+    MATCH (source)-[r]->(target)
+    RETURN elementId(source) AS source_id, source.name AS source_name, labels(source) AS source_labels, 
+           elementId(target) AS target_id, target.name AS target_name, labels(target) AS target_labels, 
+           type(r) AS relation_type, r, elementId(r) AS relation_id
+    """
+
+    try:
+        result = db_handler.execute_query(query)
+        relations = []
+        for record in result:
+            relation = {
+                "relation_id": record['relation_id'],
+                "source_id": record['source_id'],
+                "source_name": record['source_name'],
+                "source_labels": record['source_labels'],
+                "target_id": record['target_id'],
+                "target_name": record['target_name'],
+                "target_labels": record['target_labels'],
+                "relation_type": record['relation_type'],
+                "properties": dict(record['r'])
+            }
+            relations.append(relation)
         return relations
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")

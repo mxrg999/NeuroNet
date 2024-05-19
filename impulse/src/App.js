@@ -2,7 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import UserManagementPage from './pages/UserManagementPage';
-import ThingManagementPage from './pages/ThingManagementPage'; // Import the ThingManagementPage
+import ThingManagementPage from './pages/ThingManagementPage';
+import RelationManagementPage from './pages/RelationManagementPage';
 import './styles.css';
 
 const App = () => {
@@ -18,14 +19,18 @@ const App = () => {
               <Link to="/user-management">User Management</Link>
             </li>
             <li>
-              <Link to="/thing-management">Thing Management</Link> {/* Add link to Thing Management */}
+              <Link to="/thing-management">Thing Management</Link>
+            </li>
+            <li>
+              <Link to="/relation-management">Relation Management</Link>
             </li>
           </ul>
         </nav>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/user-management" element={<UserManagementPage />} />
-          <Route path="/thing-management" element={<ThingManagementPage />} /> {/* Add route for Thing Management */}
+          <Route path="/thing-management" element={<ThingManagementPage />} />
+          <Route path="/relation-management" element={<RelationManagementPage />} />
         </Routes>
       </div>
     </Router>
