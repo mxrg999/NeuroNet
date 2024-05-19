@@ -42,10 +42,28 @@ export const createRelation = async (relationData) => {
       throw error.response ? error.response.data : new Error('Network Error');
     }
   };
+
+  export const getAllUsers = async () => {
+    try {
+      const response = await api.get('/users/');
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : new Error('Network Error');
+    }
+  };
   
   export const getAllRelations = async () => {
     try {
       const response = await api.get('/relations/all');
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : new Error('Network Error');
+    }
+  };
+
+  export const updateRelation = async (relationId, relationData) => {
+    try {
+      const response = await api.put(`/relations/${relationId}`, relationData);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : new Error('Network Error');

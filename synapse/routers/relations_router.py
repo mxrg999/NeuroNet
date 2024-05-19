@@ -151,3 +151,36 @@ def get_all_relations(db_handler=Depends(get_db_handler)):
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@router.put("/relations/{relation_id}")
+def update_relation(relation_id: str, request: UpdateRelationRequest, db_handler=Depends(get_db_handler)):
+    properties = request.properties or {}
+
+    if 'metadata' in properties:
+        properties['metadata'] = json.dumps(properties['metadata'])  # Serialize metadata to JSON string
+
+    # Prepare the SET clause for the properties
+    set_clauses = ', '.join([f'r.{key} = ${key}' for key in properties.keys()])
+
+    # Prepare the REMOVE clause for the properties that need to be removed
+    remove_clauses = ', '.join([f'r.{key}' for key in properties.keys() if properties[key] is None])
+
+    query = f"""
+    MATCH ()-[r]->()
+    WHERE elementId(r) = $relation_id
+    SET {set_clauses}
+    {f"REMOVE {remove_clauses}" if remove_clauses else ""}
+    RETURN elementId(r) AS relation_id
+    """
+
+    parameters = {**properties, 'relation_id': relation_id}
+
+    try:
+        result = db_handler.execute_query(query, parameters)
+        if result:
+            return {"relation_id": result[0]['relation_id']}
+        else:
+            raise HTTPException(status_code=404, detail="Relation not found")
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")

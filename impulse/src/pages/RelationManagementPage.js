@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { getAllThings, createRelation, getRelations, deleteRelation, getAllRelations } from '../services/relationService';
+import { getAllThings, getAllUsers, createRelation, deleteRelation, getAllRelations, updateRelation } from '../services/relationService';
 
 const RelationManagementPage = () => {
   const [things, setThings] = useState([]);
+  const [users, setUsers] = useState([]);
   const [sourceId, setSourceId] = useState('');
   const [targetId, setTargetId] = useState('');
   const [relationType, setRelationType] = useState('');
   const [relations, setRelations] = useState([]);
   const [allRelations, setAllRelations] = useState([]);
   const [properties, setProperties] = useState([]);
+  const [editProperties, setEditProperties] = useState([]);
+  const [editingRelation, setEditingRelation] = useState(null);
   const [message, setMessage] = useState('');
   const [messageColor, setMessageColor] = useState('');
 
   useEffect(() => {
     fetchAllThings();
+    fetchAllUsers();
     fetchAllRelations();
   }, []);
 
@@ -23,6 +27,16 @@ const RelationManagementPage = () => {
       setThings(thingsData);
     } catch (error) {
       setMessage(error.message || 'An error occurred while fetching things');
+      setMessageColor('red');
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      const usersData = await getAllUsers();
+      setUsers(usersData);
+    } catch (error) {
+      setMessage(error.message || 'An error occurred while fetching users');
       setMessageColor('red');
     }
   };
@@ -88,6 +102,65 @@ const RelationManagementPage = () => {
     }
   };
 
+  const handleEditPropertiesChange = (index, key, value) => {
+    const newProperties = [...editProperties];
+    newProperties[index][key] = value;
+    setEditProperties(newProperties);
+  };
+
+  const handleAddEditProperty = () => {
+    setEditProperties([...editProperties, { key: '', value: '' }]);
+  };
+
+  const handleRemoveEditProperty = (index) => {
+    const newProperties = [...editProperties];
+    newProperties.splice(index, 1);
+    setEditProperties(newProperties);
+  };
+
+  const handleEditRelation = (relation) => {
+    setEditingRelation(relation);
+    const relationProperties = Object.entries(relation.properties).map(([key, value]) => ({ key, value }));
+    setEditProperties(relationProperties);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingRelation) return;
+    const propertiesObj = editProperties.reduce((obj, item) => {
+      obj[item.key] = item.value;
+      return obj;
+    }, {});
+
+    // Set removed properties to null
+    Object.keys(editingRelation.properties).forEach((key) => {
+      if (!(key in propertiesObj)) {
+        propertiesObj[key] = null;
+      }
+    });
+
+    const relationData = {
+      properties: propertiesObj,
+    };
+    try {
+      await updateRelation(editingRelation.relation_id, relationData);
+      setMessage('Relation updated successfully');
+      setMessageColor('green');
+      setEditingRelation(null);
+      fetchAllRelations();
+    } catch (error) {
+      setMessage(error.message || 'An error occurred while updating relation');
+      setMessageColor('red');
+    }
+  };
+
+  const getElementNameById = (id) => {
+    const thing = things.find(t => t.id === id);
+    if (thing) return thing.name;
+    const user = users.find(u => u.id === id);
+    if (user) return user.username;
+    return id;
+  };
+
   return (
     <div>
       <h2>Relation Management</h2>
@@ -100,7 +173,12 @@ const RelationManagementPage = () => {
             <option value="">Select Source</option>
             {things.map((thing) => (
               <option key={thing.id} value={thing.id}>
-                {thing.name}
+                Thing: {thing.name}
+              </option>
+            ))}
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                User: {user.username}
               </option>
             ))}
           </select>
@@ -120,7 +198,12 @@ const RelationManagementPage = () => {
             <option value="">Select Destination</option>
             {things.map((thing) => (
               <option key={thing.id} value={thing.id}>
-                {thing.name}
+                Thing: {thing.name}
+              </option>
+            ))}
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                User: {user.username}
               </option>
             ))}
           </select>
@@ -163,17 +246,47 @@ const RelationManagementPage = () => {
         <tbody>
           {allRelations.map((relation) => (
             <tr key={relation.relation_id}>
-              <td>{relation.source_name} ({relation.source_id})</td>
+              <td>{getElementNameById(relation.source_id)}</td>
               <td>{relation.relation_type}</td>
-              <td>{relation.target_name} ({relation.target_id})</td>
+              <td>{getElementNameById(relation.target_id)}</td>
               <td>{JSON.stringify(relation.properties)}</td>
               <td>
+                <button onClick={() => handleEditRelation(relation)}>Edit</button>
                 <button onClick={() => handleDeleteRelation(relation.relation_id)}>Delete</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {editingRelation && (
+        <div>
+          <h3>Edit Relation</h3>
+          <div>
+            <label>Properties:</label>
+            {editProperties.map((property, index) => (
+              <div key={index}>
+                <input
+                  type="text"
+                  placeholder="Key"
+                  value={property.key}
+                  onChange={(e) => handleEditPropertiesChange(index, 'key', e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Value"
+                  value={property.value}
+                  onChange={(e) => handleEditPropertiesChange(index, 'value', e.target.value)}
+                />
+                <button type="button" onClick={() => handleRemoveEditProperty(index)}>Remove</button>
+              </div>
+            ))}
+            <button type="button" onClick={handleAddEditProperty}>Add Property</button>
+          </div>
+          <button type="button" onClick={handleSaveEdit}>Save</button>
+          <button type="button" onClick={() => setEditingRelation(null)}>Cancel</button>
+        </div>
+      )}
     </div>
   );
 };
