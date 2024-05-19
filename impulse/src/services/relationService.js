@@ -51,6 +51,15 @@ export const createRelation = async (relationData) => {
       throw error.response ? error.response.data : new Error('Network Error');
     }
   };
+
+  export const getAllPlaces = async () => {
+    try {
+      const response = await api.get('/places/');
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : new Error('Network Error');
+    }
+  };
   
   export const getAllRelations = async () => {
     try {

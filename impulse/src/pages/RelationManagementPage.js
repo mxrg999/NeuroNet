@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { getAllThings, getAllUsers, createRelation, deleteRelation, getAllRelations, updateRelation } from '../services/relationService';
+import { getAllThings, getAllUsers, getAllPlaces, createRelation, deleteRelation, getAllRelations, updateRelation } from '../services/relationService';
 
 const RelationManagementPage = () => {
   const [things, setThings] = useState([]);
   const [users, setUsers] = useState([]);
+  const [places, setPlaces] = useState([]);
   const [sourceId, setSourceId] = useState('');
   const [targetId, setTargetId] = useState('');
   const [relationType, setRelationType] = useState('');
@@ -18,6 +19,7 @@ const RelationManagementPage = () => {
   useEffect(() => {
     fetchAllThings();
     fetchAllUsers();
+    fetchAllPlaces();
     fetchAllRelations();
   }, []);
 
@@ -37,6 +39,16 @@ const RelationManagementPage = () => {
       setUsers(usersData);
     } catch (error) {
       setMessage(error.message || 'An error occurred while fetching users');
+      setMessageColor('red');
+    }
+  };
+
+  const fetchAllPlaces = async () => {
+    try {
+      const placesData = await getAllPlaces();
+      setPlaces(placesData);
+    } catch (error) {
+      setMessage(error.message || 'An error occurred while fetching places');
       setMessageColor('red');
     }
   };
@@ -158,6 +170,8 @@ const RelationManagementPage = () => {
     if (thing) return thing.name;
     const user = users.find(u => u.id === id);
     if (user) return user.username;
+    const place = places.find(p => p.id === id);
+    if (place) return place.name;
     return id;
   };
 
@@ -179,6 +193,11 @@ const RelationManagementPage = () => {
             {users.map((user) => (
               <option key={user.id} value={user.id}>
                 User: {user.username}
+              </option>
+            ))}
+            {places.map((place) => (
+              <option key={place.id} value={place.id}>
+                Place: {place.name}
               </option>
             ))}
           </select>
@@ -204,6 +223,11 @@ const RelationManagementPage = () => {
             {users.map((user) => (
               <option key={user.id} value={user.id}>
                 User: {user.username}
+              </option>
+            ))}
+            {places.map((place) => (
+              <option key={place.id} value={place.id}>
+                Place: {place.name}
               </option>
             ))}
           </select>
