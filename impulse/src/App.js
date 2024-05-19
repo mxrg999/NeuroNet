@@ -1,15 +1,34 @@
 import React from 'react';
-import CreateUserForm from './components/CreateUserForm';
-import SearchUserForm from './components/SearchUserForm';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import CreateUserPage from './pages/CreateUserPage';
+import SearchUserPage from './pages/SearchUserPage';
 import './styles.css';
 
 const App = () => {
   return (
-    <div className="App">
-      <h1>User Management</h1>
-      <CreateUserForm />
-      <SearchUserForm />
-    </div>
+    <Router>
+      <div className="App">
+        <nav>
+          <ul>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/create-user">Create User</Link>
+            </li>
+            <li>
+              <Link to="/search-user">Search User</Link>
+            </li>
+          </ul>
+        </nav>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/create-user" element={<CreateUserPage />} />
+          <Route path="/search-user" element={<SearchUserPage />} />
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
