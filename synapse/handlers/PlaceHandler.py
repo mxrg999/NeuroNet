@@ -18,21 +18,31 @@ class PlaceHandler:
             updated_at: $updated_at,
             metadata: $metadata
         })
+        RETURN p, elementId(p) AS id
         """
-        self.db_handler.execute_query(query, {
+        result = self.db_handler.execute_query(query, {
             'name': name,
             'description': description,
             'created_at': created_at,
             'updated_at': updated_at,
             'metadata': metadata_json
         })
+        if result:
+            place = dict(result[0]['p'])
+            place['id'] = result[0]['id']
+            place['metadata'] = json.loads(place['metadata']) if place.get('metadata') else None
+            return place
+        return None
 
-    def update_place(self, name, description=None, metadata=None):
+    def update_place(self, id, name=None, description=None, metadata=None):
         updated_at = datetime.now().isoformat()
         
         set_clauses = []
-        parameters = {'name': name, 'updated_at': updated_at}
+        parameters = {'id': id, 'updated_at': updated_at}
         
+        if name is not None:
+            set_clauses.append("p.name = $name")
+            parameters['name'] = name
         if description is not None:
             set_clauses.append("p.description = $description")
             parameters['description'] = description
@@ -45,44 +55,69 @@ class PlaceHandler:
         set_clause = ", ".join(set_clauses)
         
         query = f"""
-        MATCH (p:Place {{name: $name}})
+        MATCH (p:Place)
+        WHERE elementId(p) = $id
         SET {set_clause}
-        RETURN p
+        RETURN p, elementId(p) AS id
         """
         result = self.db_handler.execute_query(query, parameters)
         if result:
             place = dict(result[0]['p'])
+            place['id'] = result[0]['id']
             place['metadata'] = json.loads(place['metadata']) if place.get('metadata') else None
             return place
         return None
 
-    def delete_place(self, name):
+    def delete_place(self, id):
+        query = """
+        MATCH (p:Place)
+        WHERE elementId(p) = $id
+        WITH p, elementId(p) AS id
+        DETACH DELETE p
+        RETURN id
+        """
+        result = self.db_handler.execute_query(query, {'id': id})
+        if result:
+            return result[0]['id']
+        return None
+
+    def get_place_by_id(self, id):
+        query = """
+        MATCH (p:Place)
+        WHERE elementId(p) = $id
+        RETURN p, elementId(p) AS id
+        """
+        result = self.db_handler.execute_query(query, {'id': id})
+        if result:
+            place = dict(result[0]['p'])
+            place['id'] = result[0]['id']
+            place['metadata'] = json.loads(place['metadata']) if place.get('metadata') else None
+            return place
+        return None
+
+    def get_place_by_name(self, name):
         query = """
         MATCH (p:Place {name: $name})
-        DETACH DELETE p
+        RETURN p, elementId(p) AS id
         """
-        self.db_handler.execute_query(query, {'name': name})
+        result = self.db_handler.execute_query(query, {'name': name})
+        if result:
+            place = dict(result[0]['p'])
+            place['id'] = result[0]['id']
+            place['metadata'] = json.loads(place['metadata']) if place.get('metadata') else None
+            return place
+        return None
 
-    def interact_with_place(self, username, place_name, priority=None, status=None, due_date=None, metadata=None):
-        interaction_time = datetime.now().isoformat()
-        metadata_json = json.dumps(metadata) if metadata else None
-
+    def get_all_places(self):
         query = """
-        MATCH (u:User {username: $username}), (p:Place {name: $place_name})
-        CREATE (u)-[:INTERACTED_WITH {
-            priority: $priority,
-            status: $status,
-            due_date: $due_date,
-            timestamp: $interaction_time,
-            metadata: $metadata
-        }]->(p)
+        MATCH (p:Place)
+        RETURN p, elementId(p) AS id
         """
-        self.db_handler.execute_query(query, {
-            'username': username,
-            'place_name': place_name,
-            'priority': priority,
-            'status': status,
-            'due_date': due_date.isoformat() if due_date else None,
-            'interaction_time': interaction_time,
-            'metadata': metadata_json
-        })
+        result = self.db_handler.execute_query(query)
+        places = []
+        for record in result:
+            place = dict(record['p'])
+            place['id'] = record['id']
+            place['metadata'] = json.loads(place['metadata']) if place.get('metadata') else None
+            places.append(place)
+        return places

@@ -6,6 +6,7 @@ from deps import get_db_handler
 from routers.user_router import router as user_router
 from routers.thing_router import router as thing_router
 from routers.relations_router import router as relations_router
+from routers.place_router import router as place_router
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(user_router)
 app.include_router(thing_router)
 app.include_router(relations_router)
+app.include_router(place_router)
 
 # Ensure the database connection is closed gracefully on shutdown
 def close_db_handler():

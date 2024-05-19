@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import UserManagementPage from './pages/UserManagementPage';
 import ThingManagementPage from './pages/ThingManagementPage';
 import RelationManagementPage from './pages/RelationManagementPage';
+import PlaceManagementPage from './pages/PlaceManagementPage';
 import './styles.css';
 
 const App = () => {
@@ -24,6 +25,9 @@ const App = () => {
             <li>
               <Link to="/relation-management">Relation Management</Link>
             </li>
+            <li>
+              <Link to="/place-management">Place Management</Link>
+            </li>
           </ul>
         </nav>
         <Routes>
@@ -31,6 +35,7 @@ const App = () => {
           <Route path="/user-management" element={<UserManagementPage />} />
           <Route path="/thing-management" element={<ThingManagementPage />} />
           <Route path="/relation-management" element={<RelationManagementPage />} />
+          <Route path="/place-management" element={<PlaceManagementPage />} />
         </Routes>
       </div>
     </Router>
