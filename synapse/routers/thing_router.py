@@ -58,6 +58,15 @@ def get_thing_by_name(name: str, thing_handler=Depends(get_thing_handler)):
         raise HTTPException(status_code=404, detail="Thing not found")
     return thing
 
+@router.get("/things/")
+def get_all_things(thing_handler=Depends(get_thing_handler)):
+    try:
+        things = thing_handler.get_all_things()
+        return things
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 @router.put("/things/{id}")
 def update_thing(id: str, thing_update: ThingUpdate, thing_handler=Depends(get_thing_handler)):
     thing = thing_handler.update_thing(id, thing_update.name, thing_update.description, thing_update.metadata)

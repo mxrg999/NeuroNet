@@ -64,6 +64,20 @@ class ThingHandler:
             return thing
         return None
 
+    def get_all_things(self):
+        query = """
+        MATCH (task:Thing)
+        RETURN task, elementId(task) AS id
+        """
+        result = self.db_handler.execute_query(query)
+        things = []
+        for record in result:
+            task = dict(record['task'])
+            task['id'] = record['id']
+            task['metadata'] = json.loads(task['metadata']) if task.get('metadata') else None
+            things.append(task)
+        return things
+
     def update_thing(self, id, name=None, description=None, metadata=None):
         updated_at = datetime.now().isoformat()
         
