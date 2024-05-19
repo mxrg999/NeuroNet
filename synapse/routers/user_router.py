@@ -14,6 +14,7 @@ class User(BaseModel):
     metadata: dict = None
 
 class UserUpdate(BaseModel):
+    username: str = None
     email: str = None
     metadata: dict = None
 
@@ -37,15 +38,6 @@ def create_user(user: User, user_handler=Depends(get_user_handler)):
         logger.error(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@router.get("/users/")
-def get_all_users(user_handler=Depends(get_user_handler)):
-    try:
-        users = user_handler.get_all_users()
-        return users
-    except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
 @router.get("/users/username/{username}")
 def get_user_by_username(username: str, user_handler=Depends(get_user_handler)):
     user = user_handler.get_user_by_username(username)
@@ -60,9 +52,18 @@ def get_user_by_id(user_id: str, user_handler=Depends(get_user_handler)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+@router.get("/users/")
+def get_all_users(user_handler=Depends(get_user_handler)):
+    try:
+        users = user_handler.get_all_users()
+        return users
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 @router.put("/users/{user_id}")
 def update_user(user_id: str, user_update: UserUpdate, user_handler=Depends(get_user_handler)):
-    user = user_handler.update_user(user_id, user_update.email, user_update.metadata)
+    user = user_handler.update_user(user_id, user_update.username, user_update.email, user_update.metadata)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {

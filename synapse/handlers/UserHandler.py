@@ -78,12 +78,15 @@ class UserHandler:
             return user
         return None
 
-    def update_user(self, user_id, email=None, metadata=None):
+    def update_user(self, user_id, username=None, email=None, metadata=None):
         updated_at = datetime.now().isoformat()
         
         set_clauses = []
         parameters = {'user_id': user_id, 'updated_at': updated_at}
         
+        if username is not None:
+            set_clauses.append("u.username = $username")
+            parameters['username'] = username
         if email is not None:
             set_clauses.append("u.email = $email")
             parameters['email'] = email
