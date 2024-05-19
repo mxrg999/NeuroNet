@@ -11,6 +11,15 @@ export const createUser = async (userData) => {
   }
 };
 
+export const getAllUsers = async () => {
+  try {
+    const response = await api.get('/users/');
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : new Error('Network Error');
+  }
+};
+
 export const getUserByUsername = async (username) => {
   try {
     const response = await api.get(`/users/username/${username}`);

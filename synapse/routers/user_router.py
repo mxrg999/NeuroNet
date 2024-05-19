@@ -37,6 +37,15 @@ def create_user(user: User, user_handler=Depends(get_user_handler)):
         logger.error(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+@router.get("/users/")
+def get_all_users(user_handler=Depends(get_user_handler)):
+    try:
+        users = user_handler.get_all_users()
+        return users
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 @router.get("/users/username/{username}")
 def get_user_by_username(username: str, user_handler=Depends(get_user_handler)):
     user = user_handler.get_user_by_username(username)

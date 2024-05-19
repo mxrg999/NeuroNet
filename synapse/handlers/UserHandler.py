@@ -37,6 +37,20 @@ class UserHandler:
             return result[0]['id']
         return None
 
+    def get_all_users(self):
+        query = """
+        MATCH (u:User)
+        RETURN u, elementId(u) AS id
+        """
+        results = self.db_handler.execute_query(query)
+        users = []
+        for result in results:
+            user = dict(result['u'])
+            user['id'] = result['id']
+            user['metadata'] = json.loads(user['metadata']) if user.get('metadata') else None
+            users.append(user)
+        return users
+
     def get_user_by_username(self, username):
         query = """
         MATCH (u:User {username: $username})
