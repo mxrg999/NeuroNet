@@ -2,6 +2,7 @@ from handlers.DatabaseHandler import DatabaseHandler
 from handlers.UserHandler import UserHandler
 from handlers.ThingHandler import ThingHandler
 from handlers.PlaceHandler import PlaceHandler
+from handlers.FilterHandler import FilterHandler
 
 # Initialize the db_handler
 db_handler = DatabaseHandler(uri="bolt://neuron:7687", user="neo4j", password="mxrg@neuron")
@@ -10,6 +11,7 @@ db_handler = DatabaseHandler(uri="bolt://neuron:7687", user="neo4j", password="m
 user_handler = UserHandler(db_handler)
 thing_handler = ThingHandler(db_handler)
 place_handler = PlaceHandler(db_handler)
+filter_handler = FilterHandler(db_handler)
 
 def get_db_handler():
     return db_handler
@@ -22,3 +24,6 @@ def get_thing_handler():
 
 def get_place_handler():
     return place_handler
+
+def get_filter_handler():
+    return filter_handler

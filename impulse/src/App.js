@@ -3,8 +3,9 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import UserManagementPage from './pages/UserManagementPage';
 import ThingManagementPage from './pages/ThingManagementPage';
-import RelationManagementPage from './pages/RelationManagementPage';
 import PlaceManagementPage from './pages/PlaceManagementPage';
+import RelationManagementPage from './pages/RelationManagementPage';
+import FilterManagementPage from './pages/FilterManagementPage';
 import './styles.css';
 
 const App = () => {
@@ -23,10 +24,13 @@ const App = () => {
               <Link to="/thing-management">Thing Management</Link>
             </li>
             <li>
+              <Link to="/place-management">Place Management</Link>
+            </li>
+            <li>
               <Link to="/relation-management">Relation Management</Link>
             </li>
             <li>
-              <Link to="/place-management">Place Management</Link>
+              <Link to="/filter-management">Filter Management</Link>
             </li>
           </ul>
         </nav>
@@ -34,8 +38,9 @@ const App = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/user-management" element={<UserManagementPage />} />
           <Route path="/thing-management" element={<ThingManagementPage />} />
-          <Route path="/relation-management" element={<RelationManagementPage />} />
           <Route path="/place-management" element={<PlaceManagementPage />} />
+          <Route path="/relation-management" element={<RelationManagementPage />} />
+          <Route path="/filter-management" element={<FilterManagementPage />} />
         </Routes>
       </div>
     </Router>
