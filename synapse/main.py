@@ -8,6 +8,7 @@ from routers.thing_router import router as thing_router
 from routers.relations_router import router as relations_router
 from routers.place_router import router as place_router
 from routers.filter_router import router as filter_router
+from routers.cortex_router import router as cortex_router
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -34,7 +35,8 @@ app.include_router(user_router)
 app.include_router(thing_router)
 app.include_router(relations_router)
 app.include_router(place_router)
-app.include_router(filter_router)  # Include the filter router
+app.include_router(filter_router)
+app.include_router(cortex_router)
 
 # Ensure the database connection is closed gracefully on shutdown
 def close_db_handler():
