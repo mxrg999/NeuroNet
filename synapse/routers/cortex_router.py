@@ -1,149 +1,80 @@
-from fastapi import APIRouter, HTTPException, File, UploadFile, Depends
+from fastapi import FastAPI, APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
-import requests
-import logging
+from ollama import Client
+from typing import List
 
-logger = logging.getLogger(__name__)
+api_router = APIRouter()
 
-router = APIRouter()
+# Define the Ollama client
+ollama_client = Client(host='http://cortex:11434')
 
-# Configuration for Ollama API
-OLLAMA_API_URL = "http://cortex:11434"
+# Define Pydantic models for request and response bodies
+class ChatMessage(BaseModel):
+    role: str
+    content: str
 
-# Pydantic models
-class OllamaRequest(BaseModel):
+class ChatRequest(BaseModel):
+    model: str
+    messages: List[ChatMessage]
+
+class ChatResponse(BaseModel):
+    content: str
+
+class GenerateRequest(BaseModel):
     model: str
     prompt: str
-    options: Optional[dict] = None
 
-class OllamaChatRequest(BaseModel):
-    model: str
-    messages: List[dict]
-    stream: bool = True
-
-class OllamaResponse(BaseModel):
-    response: str
-    model: str
-    context: Optional[List[int]] = None
-    duration: Optional[int] = None
-
-class ModelStatus(BaseModel):
-    model: str
-    status: str
-    loaded: bool
-
-class PullModelRequest(BaseModel):
-    model_name: str
+class GenerateResponse(BaseModel):
+    content: str
 
 class EmbeddingRequest(BaseModel):
     model: str
-    text: str
+    prompt: str
 
 class EmbeddingResponse(BaseModel):
     embeddings: List[float]
-    model: str
 
-@router.post("/cortex/generate", response_model=OllamaResponse)
-def generate_response(ollama_request: OllamaRequest):
-    try:
-        response = requests.post(f"{OLLAMA_API_URL}/api/generate", json=ollama_request.dict())
-        response.raise_for_status()
-        data = response.json()
-        return OllamaResponse(
-            response=data['response'],
-            model=data['model'],
-            context=data.get('context', []),
-            duration=data.get('total_duration')
-        )
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to generate response from Ollama")
+class ImageAnalysisRequest(BaseModel):
+    image_base64: str
 
-@router.post("/cortex/chat", response_model=OllamaResponse)
-def chat_with_model(chat_request: OllamaChatRequest):
-    try:
-        response = requests.post(f"{OLLAMA_API_URL}/api/chat", json=chat_request.dict())
-        response.raise_for_status()
-        data = response.json()
-        return OllamaResponse(
-            response=data['message']['content'],
-            model=data['model'],
-            context=data.get('context', []),
-            duration=data.get('total_duration')
-        )
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to chat with Ollama model")
+class ImageAnalysisResponse(BaseModel):
+    description: str
 
-@router.get("/cortex/status", response_model=List[ModelStatus])
-def get_status():
+# Define the chat endpoint
+@api_router.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
     try:
-        response = requests.get(f"{OLLAMA_API_URL}/api/status")
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get status from Ollama")
+        response = ollama_client.chat(model=request.model, messages=[message.dict() for message in request.messages])
+        return ChatResponse(content=response['message']['content'])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/cortex/models", response_model=List[str])
-def list_models():
+# Define the generate endpoint
+@api_router.post("/generate", response_model=GenerateResponse)
+async def generate(request: GenerateRequest):
     try:
-        response = requests.get(f"{OLLAMA_API_URL}/api/models")
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to list models from Ollama")
+        response = ollama_client.generate(model=request.model, prompt=request.prompt)
+        return GenerateResponse(content=response)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/cortex/models/{model_name}")
-def delete_model(model_name: str):
+# Define the embeddings endpoint
+@api_router.post("/embeddings", response_model=EmbeddingResponse)
+async def embeddings(request: EmbeddingRequest):
     try:
-        response = requests.delete(f"{OLLAMA_API_URL}/api/models/{model_name}")
-        response.raise_for_status()
-        return {"message": f"Model {model_name} deleted successfully"}
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete model {model_name} from Ollama")
+        response = ollama_client.embeddings(model=request.model, prompt=request.prompt)
+        return EmbeddingResponse(embeddings=response['embeddings'])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/cortex/models/pull")
-def pull_model(pull_model_request: PullModelRequest):
+# Define the image analysis endpoint
+@api_router.post("/image-analysis", response_model=ImageAnalysisResponse)
+async def image_analysis(request: ImageAnalysisRequest):
     try:
-        response = requests.post(f"{OLLAMA_API_URL}/api/models/pull", json={"model": pull_model_request.model_name})
-        response.raise_for_status()
-        return {"message": f"Model {pull_model_request.model_name} pulled successfully"}
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to pull model {pull_model_request.model_name} from Ollama")
+        # Here, you would include your image analysis logic
+        # For demonstration, we return a placeholder response
+        description = "This is a placeholder for image analysis result."
+        return ImageAnalysisResponse(description=description)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/cortex/analyze-image", response_model=OllamaResponse)
-def analyze_image(model: str, file: UploadFile = File(...)):
-    try:
-        files = {"file": (file.filename, file.file, file.content_type)}
-        data = {"model": model}
-        response = requests.post(f"{OLLAMA_API_URL}/api/analyze-image", files=files, data=data)
-        response.raise_for_status()
-        data = response.json()
-        return OllamaResponse(
-            response=data['response'],
-            model=data['model'],
-            context=data.get('context', []),
-            duration=data.get('total_duration')
-        )
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to analyze image with Ollama")
-
-@router.post("/cortex/embeddings", response_model=EmbeddingResponse)
-def generate_embeddings(embedding_request: EmbeddingRequest):
-    try:
-        response = requests.post(f"{OLLAMA_API_URL}/api/embeddings", json=embedding_request.dict())
-        response.raise_for_status()
-        data = response.json()
-        return EmbeddingResponse(
-            embeddings=data['embeddings'],
-            model=data['model']
-        )
-    except requests.exceptions.RequestException as e:
-        logger.error(f"RequestException: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to generate embeddings from Ollama")
